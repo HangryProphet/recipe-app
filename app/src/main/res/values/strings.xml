@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">cookpal</string>
+
+    <string name="email_label">Email:</string>
+    <string name="password_label">Password:</string>
+
+    <string name="email_hint">Enter your email</string>
+    <string name="password_hint">Enter your password</string>
+
+    <string name="login_text">Login</string>
+    <string name="register_text">Register</string>
+
+    <string name="app_logo">Cook Pal application logo</string>
+    <string name="toggle_password">Toggle password visibility</string>
+    <string name="back_icon_desc">Back to login</string>
+</resources>

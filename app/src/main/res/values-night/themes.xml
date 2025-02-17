@@ -1,0 +1,16 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme.Cookpal" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Customize your dark theme here. -->
+        <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+    </style>
+    <style name="Theme.CookPal.Splash" parent="Theme.AppCompat.Light.NoActionBar">
+        <!-- Use a background color or image -->
+        <item name="android:windowBackground">@drawable/splash_full</item>
+        <!-- If you prefer just a color, do: @color/white or something -->
+
+        <!-- Make it full screen, no title bar -->
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowFullscreen">false</item>
+    </style>
+</resources>
