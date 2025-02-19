@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/nav_home"
+        android:icon="@drawable/ic_home"
+        android:title="Home" />
+
+    <item
+        android:id="@+id/nav_bookmark"
+        android:icon="@drawable/ic_bookmark"
+        android:title="Bookmarks" />
+
+    <item
+        android:id="@+id/nav_upload"
+        android:icon="@drawable/ic_upload"
+        android:title="Upload" />
+
+    <item
+        android:id="@+id/nav_calculator"
+        android:icon="@drawable/ic_calculator"
+        android:title="Calculator" />
+
+    <item
+        android:id="@+id/nav_profile"
+        android:icon="@drawable/ic_profile"
+        android:title="Profile" />
+</menu>
+

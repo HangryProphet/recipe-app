@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+
+    <!-- Background color of SearchView -->
+    <solid android:color="@android:color/white"/>
+
+    <!-- Border color (Grey) -->
+    <stroke android:width="2dp" android:color="@android:color/darker_gray"/>
+
+    <!-- Rounded corners -->
+    <corners android:radius="24dp"/>
+
+    <!-- Inner padding -->
+    <padding android:left="16dp" android:right="16dp"/>
+</shape>

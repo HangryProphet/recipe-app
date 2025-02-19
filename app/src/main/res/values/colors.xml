@@ -3,4 +3,7 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="golden_yellow">#FFC107</color>
+    <color name="grey">#D3D3D3</color>
+    <color name="nav_selected_color">#FFC107</color> <!-- Yellow when selected -->
+    <color name="nav_unselected_color">#D3D3D3</color>
 </resources>

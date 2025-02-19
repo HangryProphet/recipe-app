@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/homeRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/white"
+    tools:context=".HomeActivity">
+
+    <TextView
+        android:id="@+id/greetingText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="HELLO User"
+        android:textStyle="bold"
+        android:textSize="24sp"
+        android:textColor="@android:color/black"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="24dp" />
+
+    <TextView
+        android:id="@+id/questionText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="What are you cooking today?"
+        android:textSize="16sp"
+        android:textColor="@android:color/darker_gray"
+        app:layout_constraintTop_toBottomOf="@id/greetingText"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="1dp"/>
+
+    <ImageView
+        android:id="@+id/profileImage"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:src="@drawable/ic_profile_placeholder"
+        android:scaleType="centerCrop"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginEnd="16dp"
+        android:layout_marginTop="24dp"/>
+
+    <!-- Filter Button -->
+    <androidx.appcompat.widget.SearchView
+        android:id="@+id/searchView"
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginEnd="8dp"
+        android:background="@drawable/rounded_search_bg"
+        android:queryHint="Search recipe"
+        app:layout_constraintEnd_toStartOf="@id/filterButton"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/questionText" />
+
+    <ImageView
+        android:id="@+id/filterButton"
+        android:layout_width="45dp"
+        android:layout_height="45dp"
+        android:src="@drawable/ic_filter"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        app:layout_constraintTop_toTopOf="@id/searchView"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginEnd="16dp"/>
+
+    <!-- Cuisine Filter (ChipGroup) -->
+    <com.google.android.material.chip.ChipGroup
+        android:id="@+id/cuisineFilterGroup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="20dp"
+        app:singleSelection="true"
+        app:layout_constraintTop_toBottomOf="@id/searchView"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="12dp">
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/filterAll"
+            style="@style/Widget.MaterialComponents.Chip.Choice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="All"
+            app:chipBackgroundColor="@color/chip_selector"
+            android:textColor="@color/chip_text_selector"
+            app:rippleColor="@android:color/transparent"
+            android:checked="true"/>
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/filterAsian"
+            style="@style/Widget.MaterialComponents.Chip.Choice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Asian"
+            app:chipBackgroundColor="@color/chip_selector"
+            android:textColor="@color/chip_text_selector"
+            app:rippleColor="@android:color/transparent"/>
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/filterChinese"
+            style="@style/Widget.MaterialComponents.Chip.Choice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Chinese"
+            app:chipBackgroundColor="@color/chip_selector"
+            android:textColor="@color/chip_text_selector"
+            app:rippleColor="@android:color/transparent"/>
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/filterFilipino"
+            style="@style/Widget.MaterialComponents.Chip.Choice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Filipino"
+            app:chipBackgroundColor="@color/chip_selector"
+            android:textColor="@color/chip_text_selector"
+            app:rippleColor="@android:color/transparent"/>
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/filterIndian"
+            style="@style/Widget.MaterialComponents.Chip.Choice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Indian"
+            app:chipBackgroundColor="@color/chip_selector"
+            android:textColor="@color/chip_text_selector"
+            app:rippleColor="@android:color/transparent"/>
+
+    </com.google.android.material.chip.ChipGroup>
+
+    <!-- Top Rated Section -->
+    <TextView
+        android:id="@+id/topRatedText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Top Rated 👍"
+        android:textStyle="bold"
+        android:textSize="16sp"
+        android:textColor="@android:color/black"
+        app:layout_constraintTop_toBottomOf="@id/cuisineFilterGroup"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"/>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/topRatedRecyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="160dp"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+        android:orientation="horizontal"
+        app:layout_constraintTop_toBottomOf="@id/topRatedText"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="8dp"/>
+
+    <!-- Recommendations Section -->
+    <TextView
+        android:id="@+id/recommendationsText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Recommendations ⭐"
+        android:textStyle="bold"
+        android:textSize="16sp"
+        android:textColor="@android:color/black"
+        app:layout_constraintTop_toBottomOf="@id/topRatedRecyclerView"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"/>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recommendationsRecyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="160dp"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+        android:orientation="horizontal"
+        app:layout_constraintTop_toBottomOf="@id/recommendationsText"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="8dp"/>
+
+    <!-- Bottom Navigation -->
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNavigationView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@android:color/white"
+        app:menu="@menu/bottom_nav_menu"
+        app:itemIconTint="@color/nav_selector"
+        app:itemTextColor="@color/nav_selector"
+        app:labelVisibilityMode="labeled"
+        app:itemBackground="@android:color/transparent"
+        app:itemRippleColor="@android:color/transparent"
+        app:layout_constraintBottom_toBottomOf="parent"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

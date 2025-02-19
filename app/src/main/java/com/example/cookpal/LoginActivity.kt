@@ -1,15 +1,13 @@
-package com.example.cookpal // Adjust to your package
+package com.example.cookpal
 
 import android.content.Intent
 import android.os.Bundle
 import android.text.method.HideReturnsTransformationMethod
 import android.text.method.PasswordTransformationMethod
-import android.widget.Button
-import android.widget.EditText
-import android.widget.ImageView
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.FirebaseApp
 
 class LoginActivity : AppCompatActivity() {
 
@@ -18,46 +16,97 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var togglePasswordIcon: ImageView
     private lateinit var loginButton: Button
     private lateinit var registerLink: TextView
+    private lateinit var forgotPasswordLink: TextView
+    private lateinit var auth: FirebaseAuth
+    private var isPasswordVisible = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_login) // The XML you provided
+        FirebaseApp.initializeApp(this)
+        setContentView(R.layout.activity_login)
 
-        // Initialize views
+        // Initialize Firebase Auth
+        auth = FirebaseAuth.getInstance()
+
+        if (auth.currentUser != null) {
+            startActivity(Intent(this, HomeActivity::class.java))
+            finish() // Prevent user from going back to login screen
+        } else {
+            setContentView(R.layout.activity_login)
+        }
+
+        // Find Views
         emailEditText = findViewById(R.id.emailEditText)
         passwordEditText = findViewById(R.id.passwordEditText)
         togglePasswordIcon = findViewById(R.id.togglePasswordIcon)
         loginButton = findViewById(R.id.loginButton)
         registerLink = findViewById(R.id.registerLink)
+        forgotPasswordLink = findViewById(R.id.forgotPasswordLink)
 
-        // 1. Toggle password visibility when eye icon is clicked
+        // Toggle password visibility when eye icon is clicked
         togglePasswordIcon.setOnClickListener {
-            if (passwordEditText.transformationMethod is PasswordTransformationMethod) {
-                // Show password
+            isPasswordVisible = !isPasswordVisible
+            if (isPasswordVisible) {
                 passwordEditText.transformationMethod = HideReturnsTransformationMethod.getInstance()
-                togglePasswordIcon.setImageResource(R.drawable.ic_eye_open) // Switch icon to "eye open"
+                togglePasswordIcon.setImageResource(R.drawable.ic_eye_open) // Switch to "eye open"
             } else {
-                // Hide password
                 passwordEditText.transformationMethod = PasswordTransformationMethod.getInstance()
-                togglePasswordIcon.setImageResource(R.drawable.ic_eye_closed) // Switch icon back to "eye closed"
+                togglePasswordIcon.setImageResource(R.drawable.ic_eye_closed) // Switch back to "eye closed"
             }
-            // Move cursor to end
-            passwordEditText.setSelection(passwordEditText.text.length)
+            passwordEditText.setSelection(passwordEditText.text.length) // Keep cursor at the end
         }
 
-        // 2. Register link - navigate to RegisterActivity (or show a Toast for now)
-        registerLink.setOnClickListener {
-            startActivity(Intent(this, RegisterActivity::class.java))
-
-        }
-
-        // 3. Login button - simple click (for now just show a Toast)
+        // Login Button Click Listener (Authenticate with Firebase)
         loginButton.setOnClickListener {
             val email = emailEditText.text.toString().trim()
             val password = passwordEditText.text.toString().trim()
 
-            // TODO: Validate inputs or integrate Firebase Auth
-            Toast.makeText(this, "Login clicked!\nEmail: $email\nPassword: $password", Toast.LENGTH_SHORT).show()
+            if (email.isEmpty() || password.isEmpty()) {
+                Toast.makeText(this, "Please enter email and password", Toast.LENGTH_SHORT).show()
+            } else {
+                loginUser(email, password)
+            }
         }
+
+        // Register Link Click Listener (Redirect to RegisterActivity)
+        registerLink.setOnClickListener {
+            startActivity(Intent(this, RegisterActivity::class.java))
+        }
+
+        // Forgot Password Click Listener
+        forgotPasswordLink.setOnClickListener {
+            val email = emailEditText.text.toString().trim()
+            if (email.isEmpty()) {
+                Toast.makeText(this, "Enter your email first!", Toast.LENGTH_SHORT).show()
+            } else {
+                resetPassword(email)
+            }
+        }
+    }
+
+    // Firebase Login Function
+    private fun loginUser(email: String, password: String) {
+        auth.signInWithEmailAndPassword(email, password)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    Toast.makeText(this, "Login Successful!", Toast.LENGTH_SHORT).show()
+                    startActivity(Intent(this, HomeActivity::class.java)) // Go to Home
+                    finish() // Close LoginActivity
+                } else {
+                    Toast.makeText(this, "Login Failed: ${task.exception?.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+    }
+
+    // Firebase Forgot Password Function
+    private fun resetPassword(email: String) {
+        auth.sendPasswordResetEmail(email)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    Toast.makeText(this, "Reset email sent!", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this, "Failed: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
     }
 }

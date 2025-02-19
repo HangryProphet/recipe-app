@@ -1,17 +1,16 @@
-package com.example.cookpal // Your package here
+package com.example.cookpal
 
+import android.content.Intent
 import android.os.Bundle
 import android.text.method.HideReturnsTransformationMethod
 import android.text.method.PasswordTransformationMethod
-import android.widget.Button
-import android.widget.EditText
-import android.widget.ImageView
-import android.widget.Toast
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 class RegisterActivity : AppCompatActivity() {
 
-    private lateinit var backArrow: ImageView
     private lateinit var usernameEditText: EditText
     private lateinit var emailEditText: EditText
     private lateinit var passwordEditText: EditText
@@ -19,13 +18,20 @@ class RegisterActivity : AppCompatActivity() {
     private lateinit var confirmPasswordEditText: EditText
     private lateinit var toggleConfirmPasswordIcon: ImageView
     private lateinit var registerButton: Button
+    private lateinit var loginLink: TextView  // Add login link reference
+    private lateinit var auth: FirebaseAuth
+    private lateinit var db: FirebaseFirestore
+    private var isPasswordVisible = false
+    private var isConfirmPasswordVisible = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_register) // The XML you provided
+        setContentView(R.layout.activity_register)
 
-        // 1. Initialize all views
-        backArrow = findViewById(R.id.backArrow)
+        // Initialize Firebase
+        auth = FirebaseAuth.getInstance()
+        db = FirebaseFirestore.getInstance()
+
         usernameEditText = findViewById(R.id.usernameEditText)
         emailEditText = findViewById(R.id.emailEditText)
         passwordEditText = findViewById(R.id.passwordEditText)
@@ -33,52 +39,80 @@ class RegisterActivity : AppCompatActivity() {
         confirmPasswordEditText = findViewById(R.id.confirmPasswordEditText)
         toggleConfirmPasswordIcon = findViewById(R.id.toggleConfirmPasswordIcon)
         registerButton = findViewById(R.id.registerButton)
+        loginLink = findViewById(R.id.loginLink) // Initialize login link
 
-        // 2. Back arrow -> finish this activity (go back to Login)
-        backArrow.setOnClickListener {
-            finish()
+        // Handle click on "Sign In" text
+        loginLink.setOnClickListener {
+            val intent = Intent(this, LoginActivity::class.java)
+            startActivity(intent)
+            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right) // Smooth transition
+            finish() // Finish RegisterActivity so user can't go back to it
         }
 
-        // 3. Toggle password visibility for main password
+        // Toggle Password Visibility
         togglePasswordIcon.setOnClickListener {
-            if (passwordEditText.transformationMethod is PasswordTransformationMethod) {
-                // Show password
-                passwordEditText.transformationMethod = HideReturnsTransformationMethod.getInstance()
-                togglePasswordIcon.setImageResource(R.drawable.ic_eye_open) // or your open-eye icon
-            } else {
-                // Hide password
-                passwordEditText.transformationMethod = PasswordTransformationMethod.getInstance()
-                togglePasswordIcon.setImageResource(R.drawable.ic_eye_closed) // revert
-            }
-            // Move cursor to end
-            passwordEditText.setSelection(passwordEditText.text.length)
+            isPasswordVisible = !isPasswordVisible
+            togglePassword(passwordEditText, togglePasswordIcon, isPasswordVisible)
         }
 
-        // 4. Toggle password visibility for confirm password
+        // Toggle Confirm Password Visibility
         toggleConfirmPasswordIcon.setOnClickListener {
-            if (confirmPasswordEditText.transformationMethod is PasswordTransformationMethod) {
-                // Show confirm password
-                confirmPasswordEditText.transformationMethod = HideReturnsTransformationMethod.getInstance()
-                toggleConfirmPasswordIcon.setImageResource(R.drawable.ic_eye_open)
-            } else {
-                // Hide confirm password
-                confirmPasswordEditText.transformationMethod = PasswordTransformationMethod.getInstance()
-                toggleConfirmPasswordIcon.setImageResource(R.drawable.ic_eye_closed)
-            }
-            // Move cursor to end
-            confirmPasswordEditText.setSelection(confirmPasswordEditText.text.length)
+            isConfirmPasswordVisible = !isConfirmPasswordVisible
+            togglePassword(confirmPasswordEditText, toggleConfirmPasswordIcon, isConfirmPasswordVisible)
         }
 
-        // 5. Register button -> (Currently) just show a Toast
+        // Register Button Click
         registerButton.setOnClickListener {
             val username = usernameEditText.text.toString().trim()
             val email = emailEditText.text.toString().trim()
             val password = passwordEditText.text.toString().trim()
             val confirmPassword = confirmPasswordEditText.text.toString().trim()
 
-            // TODO: Additional validation or Firebase calls, e.g. compare password vs confirm password
-
-            Toast.makeText(this, "Register clicked!\nUsername: $username\nEmail: $email", Toast.LENGTH_SHORT).show()
+            if (username.isEmpty() || email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
+                Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show()
+            } else if (password != confirmPassword) {
+                Toast.makeText(this, "Passwords do not match", Toast.LENGTH_SHORT).show()
+            } else {
+                registerUser(username, email, password)
+            }
         }
+    }
+
+    // Toggle Password Method
+    private fun togglePassword(editText: EditText, icon: ImageView, isVisible: Boolean) {
+        if (isVisible) {
+            editText.transformationMethod = HideReturnsTransformationMethod.getInstance()
+            icon.setImageResource(R.drawable.ic_eye_open) // Change to open eye icon
+        } else {
+            editText.transformationMethod = PasswordTransformationMethod.getInstance()
+            icon.setImageResource(R.drawable.ic_eye_closed) // Change to closed eye icon
+        }
+        editText.setSelection(editText.text.length) // Keep cursor at end
+    }
+
+    // Firebase Register Function
+    private fun registerUser(username: String, email: String, password: String) {
+        auth.createUserWithEmailAndPassword(email, password)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    val userId = auth.currentUser?.uid
+                    val userMap = hashMapOf(
+                        "username" to username,
+                        "email" to email
+                    )
+                    db.collection("users").document(userId!!)
+                        .set(userMap)
+                        .addOnSuccessListener {
+                            Toast.makeText(this, "Registration Successful!", Toast.LENGTH_SHORT).show()
+                            startActivity(Intent(this, LoginActivity::class.java))
+                            finish()
+                        }
+                        .addOnFailureListener {
+                            Toast.makeText(this, "Error saving user: ${it.message}", Toast.LENGTH_SHORT).show()
+                        }
+                } else {
+                    Toast.makeText(this, "Registration Failed: ${task.exception?.message}", Toast.LENGTH_LONG).show()
+                }
+            }
     }
 }
