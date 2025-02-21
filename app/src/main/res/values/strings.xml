@@ -13,4 +13,6 @@
     <string name="app_logo">Cook Pal application logo</string>
     <string name="toggle_password">Toggle password visibility</string>
     <string name="back_icon_desc">Back to login</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

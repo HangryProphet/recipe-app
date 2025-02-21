@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    tools:context=".UploadFragment">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:gravity="start">
+
+        <TextView
+            android:id="@+id/cancelText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:text="Cancel"
+            android:textColor="@android:color/holo_red_dark"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            tools:ignore="TouchTargetSizeCheck" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:layout_marginBottom="16dp">
+
+            <ImageView
+                android:id="@+id/recipeImage"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:maxWidth="100dp"
+                android:maxHeight="100dp"
+                android:adjustViewBounds="true"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_placeholder"
+                android:background="@drawable/rounded_edittext_bg"/>
+
+            <Button
+                android:id="@+id/addImageButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:backgroundTint="@color/golden_yellow"
+                android:minWidth="80dp"
+                android:minHeight="40dp"
+                android:stateListAnimator="@null"
+                android:text="Add Image"
+                android:textColor="@android:color/black"
+                android:textSize="14sp"
+                tools:ignore="TouchTargetSizeCheck" />
+
+        </LinearLayout>
+
+
+        <EditText
+            android:id="@+id/recipeNameInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Recipe Name"
+            android:textSize="16sp"
+            android:padding="12dp"
+            android:background="@drawable/rounded_edittext_bg"
+            android:layout_marginBottom="8dp"/>
+
+        <!-- Cuisine Type Dropdown -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Cuisine Type"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="18dp"/>
+
+        <Spinner
+            android:id="@+id/cuisineDropdown"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            tools:ignore="TouchTargetSizeCheck" />
+
+        <!-- Cooking Time Selection -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Cooking Time"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <Spinner
+                android:id="@+id/cookingTimeHours"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:layout_weight="1"
+                tools:ignore="TouchTargetSizeCheck" />
+
+            <Spinner
+                android:id="@+id/cookingTimeMinutes"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                tools:ignore="TouchTargetSizeCheck" />
+        </LinearLayout>
+
+
+
+        <EditText
+            android:id="@+id/descriptionInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Short Description"
+            android:textSize="16sp"
+            android:padding="12dp"
+            android:background="@drawable/rounded_edittext_bg"
+            android:minHeight="100dp"
+            android:inputType="textMultiLine"
+            android:lines="3"
+            android:maxLines="6"
+            android:scrollbars="vertical"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp"/>
+
+
+        <!-- Ingredients Section -->
+        <TextView
+            android:id="@+id/ingredientsLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Ingredients"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp"/>
+
+        <LinearLayout
+            android:id="@+id/ingredientsContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginBottom="8dp"/>
+
+        <Button
+            android:id="@+id/addIngredientButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Add Ingredient"
+            android:backgroundTint="@color/golden_yellow"
+            android:textColor="@android:color/black"
+            android:layout_marginBottom="16dp"/>
+
+        <!-- Steps Section -->
+        <TextView
+            android:id="@+id/stepsLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Steps"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp"/>
+
+        <LinearLayout
+            android:id="@+id/stepsContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginBottom="8dp"/>
+
+        <Button
+            android:id="@+id/addStepButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Add Step"
+            android:backgroundTint="@color/golden_yellow"
+            android:textColor="@android:color/black"
+            android:layout_marginBottom="16dp"/>
+
+
+        <!-- Save Recipe Button -->
+        <Button
+            android:id="@+id/saveRecipeButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Save Recipe"
+            android:backgroundTint="@color/golden_yellow"
+            android:textColor="@android:color/black"
+            android:layout_marginTop="32dp"
+            android:layout_marginBottom="16dp"/>
+
+    </LinearLayout>
+</ScrollView>

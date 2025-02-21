@@ -51,4 +51,13 @@
         app:layout_constraintTop_toTopOf="@id/searchView"
         tools:ignore="TouchTargetSizeCheck" />
 
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recipeRecyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="16dp"
+        app:layout_constraintTop_toBottomOf="@id/searchView"
+        app:layout_constraintBottom_toBottomOf="parent"
+        tools:listitem="@layout/item_recipe" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

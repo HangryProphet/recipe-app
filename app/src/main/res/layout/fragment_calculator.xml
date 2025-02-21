@@ -5,7 +5,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".CalculatorActivity">
+    android:background="@android:color/white"
+    tools:context=".CalculatorFragment">
 
     <TextView
         android:id="@+id/calculatorText"
@@ -19,14 +20,4 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="40dp"/>
 
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/bottomNavigationView"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@android:color/white"
-        app:menu="@menu/bottom_nav_menu"
-        app:itemIconTint="@color/nav_selector"
-        app:itemTextColor="@color/nav_selector"
-        app:labelVisibilityMode="labeled"
-        app:layout_constraintBottom_toBottomOf="parent"/>
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -23,17 +23,16 @@ class LoginActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         FirebaseApp.initializeApp(this)
-        setContentView(R.layout.activity_login)
 
-        // Initialize Firebase Auth
+        // ✅ Check if user is already logged in (Redirect to MainActivity)
         auth = FirebaseAuth.getInstance()
-
         if (auth.currentUser != null) {
-            startActivity(Intent(this, HomeActivity::class.java))
+            startActivity(Intent(this, MainActivity::class.java))
             finish() // Prevent user from going back to login screen
-        } else {
-            setContentView(R.layout.activity_login)
+            return
         }
+
+        setContentView(R.layout.activity_login)
 
         // Find Views
         emailEditText = findViewById(R.id.emailEditText)
@@ -75,12 +74,7 @@ class LoginActivity : AppCompatActivity() {
 
         // Forgot Password Click Listener
         forgotPasswordLink.setOnClickListener {
-            val email = emailEditText.text.toString().trim()
-            if (email.isEmpty()) {
-                Toast.makeText(this, "Enter your email first!", Toast.LENGTH_SHORT).show()
-            } else {
-                resetPassword(email)
-            }
+            showForgotPasswordDialog()
         }
     }
 
@@ -90,12 +84,33 @@ class LoginActivity : AppCompatActivity() {
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     Toast.makeText(this, "Login Successful!", Toast.LENGTH_SHORT).show()
-                    startActivity(Intent(this, HomeActivity::class.java)) // Go to Home
-                    finish() // Close LoginActivity
+                    startActivity(Intent(this, MainActivity::class.java)) // ✅ Redirect to MainActivity
+                    finish()
                 } else {
                     Toast.makeText(this, "Login Failed: ${task.exception?.message}", Toast.LENGTH_LONG).show()
                 }
             }
+    }
+
+    // Show Dialog for Forgot Password
+    private fun showForgotPasswordDialog() {
+        val builder = android.app.AlertDialog.Builder(this)
+        builder.setTitle("Reset Password")
+
+        val input = EditText(this)
+        input.hint = "Enter your email"
+        builder.setView(input)
+
+        builder.setPositiveButton("Send") { _, _ ->
+            val email = input.text.toString().trim()
+            if (email.isEmpty()) {
+                Toast.makeText(this, "Email cannot be empty", Toast.LENGTH_SHORT).show()
+            } else {
+                resetPassword(email)
+            }
+        }
+        builder.setNegativeButton("Cancel", null)
+        builder.show()
     }
 
     // Firebase Forgot Password Function

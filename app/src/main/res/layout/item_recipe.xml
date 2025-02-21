@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="6dp"
+    app:cardBackgroundColor="@android:color/white"
+    app:cardUseCompatPadding="true">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="12dp">
+
+        <!-- Recipe Image -->
+        <ImageView
+            android:id="@+id/recipeImage"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_placeholder"
+            android:background="@drawable/rounded_edittext_bg"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"/>
+
+        <!-- Recipe Name -->
+        <TextView
+            android:id="@+id/recipeNameText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Recipe Name"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:textColor="@android:color/black"
+            app:layout_constraintTop_toTopOf="@id/recipeImage"
+            app:layout_constraintStart_toEndOf="@id/recipeImage"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginStart="12dp"/>
+
+        <!-- Cooking Time -->
+        <TextView
+            android:id="@+id/cookingTimeText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="30 min"
+            android:textSize="14sp"
+            android:textColor="@android:color/darker_gray"
+            app:layout_constraintTop_toBottomOf="@id/recipeNameText"
+            app:layout_constraintStart_toStartOf="@id/recipeNameText"
+            android:layout_marginTop="4dp"/>
+
+        <!-- Username (Optional, can be hidden) -->
+        <TextView
+            android:id="@+id/uploaderText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Uploaded by: User"
+            android:textSize="14sp"
+            android:textColor="@android:color/holo_blue_dark"
+            android:visibility="gone"
+            app:layout_constraintTop_toBottomOf="@id/cookingTimeText"
+            app:layout_constraintStart_toStartOf="@id/recipeNameText"
+            android:layout_marginTop="4dp"/>
+
+        <!-- Rating (Star + Average) -->
+        <LinearLayout
+            android:id="@+id/ratingContainer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            app:layout_constraintBottom_toBottomOf="@id/recipeImage"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <ImageView
+                android:id="@+id/starIcon"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:src="@drawable/ic_star"
+                android:contentDescription="Star"/>
+
+            <TextView
+                android:id="@+id/ratingText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="4.5"
+                android:textSize="14sp"
+                android:textColor="@android:color/black"
+                android:layout_marginStart="4dp"/>
+        </LinearLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.cardview.widget.CardView>

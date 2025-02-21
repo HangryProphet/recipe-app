@@ -45,7 +45,10 @@ class RegisterActivity : AppCompatActivity() {
         loginLink.setOnClickListener {
             val intent = Intent(this, LoginActivity::class.java)
             startActivity(intent)
-            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right) // Smooth transition
+            overridePendingTransition(
+                R.anim.slide_in_left,
+                R.anim.slide_out_right
+            ) // Smooth transition
             finish() // Finish RegisterActivity so user can't go back to it
         }
 
@@ -58,7 +61,11 @@ class RegisterActivity : AppCompatActivity() {
         // Toggle Confirm Password Visibility
         toggleConfirmPasswordIcon.setOnClickListener {
             isConfirmPasswordVisible = !isConfirmPasswordVisible
-            togglePassword(confirmPasswordEditText, toggleConfirmPasswordIcon, isConfirmPasswordVisible)
+            togglePassword(
+                confirmPasswordEditText,
+                toggleConfirmPasswordIcon,
+                isConfirmPasswordVisible
+            )
         }
 
         // Register Button Click
@@ -92,27 +99,48 @@ class RegisterActivity : AppCompatActivity() {
 
     // Firebase Register Function
     private fun registerUser(username: String, email: String, password: String) {
-        auth.createUserWithEmailAndPassword(email, password)
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    val userId = auth.currentUser?.uid
-                    val userMap = hashMapOf(
-                        "username" to username,
-                        "email" to email
-                    )
-                    db.collection("users").document(userId!!)
-                        .set(userMap)
-                        .addOnSuccessListener {
-                            Toast.makeText(this, "Registration Successful!", Toast.LENGTH_SHORT).show()
-                            startActivity(Intent(this, LoginActivity::class.java))
-                            finish()
+        if (username.length > 20) { // ✅ Limit username length
+            usernameEditText.error = "Username must be 20 characters or less"
+            return
+        }
+
+                auth.createUserWithEmailAndPassword(email, password)
+                    .addOnCompleteListener { task ->
+                        if (task.isSuccessful) {
+                            val userId = auth.currentUser?.uid
+                            val userMap = hashMapOf(
+                                "username" to username,
+                                "email" to email,
+                                "bio" to "No bio yet.",
+                                "followers" to emptyList<String>(),
+                                "following" to emptyList<String>()
+                            )
+                            db.collection("users").document(userId!!)
+                                .set(userMap)
+                                .addOnSuccessListener {
+                                    Toast.makeText(
+                                        this,
+                                        "Registration Successful!",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                    startActivity(Intent(this, LoginActivity::class.java))
+                                    finish()
+                                }
+                                .addOnFailureListener {
+                                    Toast.makeText(
+                                        this,
+                                        "Error saving user: ${it.message}",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                        } else {
+                            Toast.makeText(
+                                this,
+                                "Registration Failed: ${task.exception?.message}",
+                                Toast.LENGTH_LONG
+                            ).show()
                         }
-                        .addOnFailureListener {
-                            Toast.makeText(this, "Error saving user: ${it.message}", Toast.LENGTH_SHORT).show()
-                        }
-                } else {
-                    Toast.makeText(this, "Registration Failed: ${task.exception?.message}", Toast.LENGTH_LONG).show()
-                }
+                    }
             }
     }
-}
+
