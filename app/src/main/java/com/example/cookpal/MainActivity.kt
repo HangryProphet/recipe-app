@@ -16,9 +16,14 @@ class MainActivity : AppCompatActivity() {
 
         bottomNavigationView = findViewById(R.id.bottomNavigationView)
 
-        // Load default fragment (Home) and set index to 0
-        if (savedInstanceState == null) {
-            loadFragment(HomeFragment(), false)
+        // Check if we're opening UploadFragment with recipe data
+        if (intent.hasExtra("FRAGMENT_TO_LOAD") && intent.getStringExtra("FRAGMENT_TO_LOAD") == "UploadFragment") {
+            openUploadFragmentWithData()
+        } else {
+            // Load default fragment (Home) if no specific fragment is requested
+            if (savedInstanceState == null) {
+                loadFragment(HomeFragment(), false)
+            }
         }
 
         bottomNavigationView.setOnItemSelectedListener { item ->
@@ -66,5 +71,28 @@ class MainActivity : AppCompatActivity() {
             4 -> UserFragment()
             else -> HomeFragment() // Default case
         }
+    }
+
+    /**
+     * 🔥 Handles opening UploadFragment when "Edit Recipe" is clicked
+     * in RecipeActivity
+     */
+    private fun openUploadFragmentWithData() {
+        val bundle = Bundle().apply {
+            putString("RECIPE_ID", intent.getStringExtra("RECIPE_ID"))
+            putString("RECIPE_NAME", intent.getStringExtra("RECIPE_NAME"))
+            putString("CUISINE_TYPE", intent.getStringExtra("CUISINE_TYPE"))
+            putString("COOKING_TIME", intent.getStringExtra("COOKING_TIME"))
+            putString("SHORT_DESCRIPTION", intent.getStringExtra("SHORT_DESCRIPTION"))
+            putStringArrayList("INGREDIENTS", intent.getStringArrayListExtra("INGREDIENTS"))
+            putStringArrayList("STEPS", intent.getStringArrayListExtra("STEPS"))
+        }
+
+        val uploadFragment = UploadFragment().apply { arguments = bundle }
+
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragmentContainer, uploadFragment)
+            .addToBackStack(null)
+            .commit()
     }
 }

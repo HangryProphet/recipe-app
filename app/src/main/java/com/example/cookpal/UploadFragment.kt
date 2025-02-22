@@ -87,6 +87,25 @@ class UploadFragment : Fragment() {
 
         return view
     }
+    private fun setCookingTimeDropdown(cookingTime: String) {
+        val timeParts = cookingTime.split(" ")
+
+        var hours = 0
+        var minutes = 0
+
+        for (part in timeParts) {
+            if (part.contains("hr")) {
+                hours = part.replace(" hr", "").toIntOrNull() ?: 0
+            }
+            if (part.contains("min")) {
+                minutes = part.replace(" min", "").toIntOrNull() ?: 0
+            }
+        }
+
+        // Set the dropdown selections
+        cookingTimeHours.setSelection(hours)
+        cookingTimeMinutes.setSelection(minutes)
+    }
 
     private fun showCancelDialog() {
         AlertDialog.Builder(requireContext())

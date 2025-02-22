@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
 
 class UserFragment : Fragment() {
@@ -126,9 +127,9 @@ class UserFragment : Fragment() {
         val userId = auth.currentUser?.uid ?: return
         loadRecipeCount(userId)
 
-        db.collection("users").document(userId).get()
-            .addOnSuccessListener { document ->
-                if (document.exists()) {
+        db.collection("users").document(userId)
+            .addSnapshotListener { document, _ ->  // ✅ Real-time listener (updates dynamically)
+                if (document != null && document.exists()) {
                     // Fetch username
                     var username = document.getString("username") ?: "User"
                     if (username.length > 15) {
@@ -139,32 +140,24 @@ class UserFragment : Fragment() {
                     }
                     profileTitle.text = username
 
-                    // Fetch bio (initialize if missing)
-                    val bio = document.getString("bio") ?: "No bio yet."
-                    profileBio.text = bio
-                    if (!document.contains("bio")) {
-                        db.collection("users").document(userId).update("bio", "No bio yet.")
-                    }
+                    // Fetch bio
+                    profileBio.text = document.getString("bio") ?: "No bio yet."
 
-                    // Fetch follower & following count (initialize if missing)
+                    // Fetch follower & following count dynamically
                     val followers = (document.get("followers") as? List<String>)?.size ?: 0
                     val following = (document.get("following") as? List<String>)?.size ?: 0
                     profileFollowersCount.text = "$followers"
                     profileFollowingCount.text = "$following"
 
-                    if (!document.contains("followers")) {
-                        db.collection("users").document(userId).update("followers", emptyList<String>())
-                    }
-                    if (!document.contains("following")) {
-                        db.collection("users").document(userId).update("following", emptyList<String>())
+                    // If followers & following fields don't exist, initialize them
+                    val updates = mutableMapOf<String, Any>()
+                    if (!document.contains("followers")) updates["followers"] = emptyList<String>()
+                    if (!document.contains("following")) updates["following"] = emptyList<String>()
+
+                    if (updates.isNotEmpty()) {
+                        db.collection("users").document(userId).update(updates)
                     }
                 }
-            }
-            .addOnFailureListener {
-                profileTitle.text = "Profile"
-                profileBio.text = "No bio available."
-                profileFollowersCount.text = "0"
-                profileFollowingCount.text = "0"
             }
     }
 
@@ -188,7 +181,6 @@ class UserFragment : Fragment() {
                 profileFollowingCount.text = "$following"
             }
     }
-
 
 
     private fun loadUserRecipes() {
@@ -224,56 +216,32 @@ class UserFragment : Fragment() {
                     recipeAdapter.notifyDataSetChanged()
                 } else {
                     db.collection("recipes")
-                        .whereIn("recipeId", bookmarkedRecipeIds)
+                        .whereIn(FieldPath.documentId(), bookmarkedRecipeIds)
                         .get()
                         .addOnSuccessListener { documents ->
                             recipeList.clear()
-                            for (document in documents) {
+                            for (doc in documents) {
                                 val recipe = Recipe(
-                                    recipeId = document.id,
-                                    recipeName = document.getString("recipeName") ?: "Unknown",
-                                    cookingTime = document.getString("cookingTime") ?: "N/A",
-                                    rating = document.getDouble("averageRating") ?: 0.0
+                                    recipeId = doc.id,
+                                    recipeName = doc.getString("recipeName") ?: "Unknown",
+                                    cookingTime = doc.getString("cookingTime") ?: "N/A",
+                                    rating = doc.getDouble("averageRating") ?: 0.0
                                 )
                                 recipeList.add(recipe)
                             }
                             recipeAdapter.notifyDataSetChanged()
                         }
+                        .addOnFailureListener {
+                            Toast.makeText(requireContext(), "Error loading bookmarks.", Toast.LENGTH_SHORT).show()
+                        }
                 }
             }
     }
 
+
     private fun showSettingsMenu(anchor: ImageView) {
         val popup = PopupMenu(requireContext(), anchor)
         popup.menuInflater.inflate(R.menu.user_profile_menu, popup.menu)
-
-        val viewedUserId = arguments?.getString("VIEWED_USER_ID")
-        val currentUserId = auth.currentUser?.uid ?: return
-
-        // Check if this is another user's profile
-        if (viewedUserId != null && viewedUserId != currentUserId) {
-            // Dynamically add Follow/Unfollow option
-            db.collection("users").document(currentUserId).get()
-                .addOnSuccessListener { document ->
-                    val followingList = document.get("following") as? List<String> ?: emptyList()
-                    val isFollowing = followingList.contains(viewedUserId)
-
-                    val followMenuItem = if (isFollowing) {
-                        popup.menu.add("Unfollow")
-                    } else {
-                        popup.menu.add("Follow")
-                    }
-
-                    followMenuItem.setOnMenuItemClickListener {
-                        toggleFollow(currentUserId, viewedUserId)
-                        true
-                    }
-
-                    popup.show()
-                }
-        } else {
-            popup.show()
-        }
 
         popup.setOnMenuItemClickListener { item: MenuItem ->
             when (item.itemId) {
@@ -292,36 +260,9 @@ class UserFragment : Fragment() {
                 else -> false
             }
         }
+
+        popup.show()
     }
-
-    private fun toggleFollow(currentUserId: String, viewedUserId: String) {
-        db.runTransaction { transaction ->
-            val currentUserRef = db.collection("users").document(currentUserId)
-            val viewedUserRef = db.collection("users").document(viewedUserId)
-
-            val currentUserDoc = transaction.get(currentUserRef)
-            val viewedUserDoc = transaction.get(viewedUserRef)
-
-            val followingList = (currentUserDoc.get("following") as? MutableList<String>) ?: mutableListOf()
-            val followersList = (viewedUserDoc.get("followers") as? MutableList<String>) ?: mutableListOf()
-
-            if (followingList.contains(viewedUserId)) {
-                followingList.remove(viewedUserId)
-                followersList.remove(currentUserId)
-            } else {
-                followingList.add(viewedUserId)
-                followersList.add(currentUserId)
-            }
-
-            transaction.update(currentUserRef, "following", followingList)
-            transaction.update(viewedUserRef, "followers", followersList)
-        }.addOnSuccessListener {
-            loadFollowCounts(currentUserId) // Refresh UI immediately after following/unfollowing
-            Toast.makeText(requireContext(), "Follow status updated!", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-
 
     private fun showEditBioDialog() {
         val editText = EditText(requireContext()).apply {

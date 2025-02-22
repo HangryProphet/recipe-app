@@ -106,7 +106,9 @@ class UserProfileActivity : AppCompatActivity() {
                     profileFollowersCount.text = "$followers"
                     profileFollowingCount.text = "$following"
 
+                    updateFollowCounts()
                     checkFollowStatus()
+
                 }
             }
     }
@@ -174,35 +176,78 @@ class UserProfileActivity : AppCompatActivity() {
     private fun toggleFollow() {
         val currentUserId = auth.currentUser?.uid ?: return
 
-        db.runTransaction { transaction ->
-            val currentUserRef = db.collection("users").document(currentUserId)
-            val viewedUserRef = db.collection("users").document(viewedUserId)
+        val currentUserRef = db.collection("users").document(currentUserId)
+        val viewedUserRef = db.collection("users").document(viewedUserId)
 
+        db.runTransaction { transaction ->
             val currentUserDoc = transaction.get(currentUserRef)
             val viewedUserDoc = transaction.get(viewedUserRef)
 
-            val isCurrentlyFollowing = (currentUserDoc.get("following") as? List<String>)?.contains(viewedUserId) ?: false
+            // Retrieve current lists; default to empty mutable lists if they don't exist.
+            val currentFollowing = (currentUserDoc.get("following") as? MutableList<String>) ?: mutableListOf()
+            val viewedFollowers = (viewedUserDoc.get("followers") as? MutableList<String>) ?: mutableListOf()
+            // Retrieve the "following" list from the viewed user to include in the payload (even if unchanged).
+            val viewedFollowing = (viewedUserDoc.get("following") as? MutableList<String>) ?: mutableListOf()
 
-            if (isCurrentlyFollowing) {
-                transaction.update(currentUserRef, "following", FieldValue.arrayRemove(viewedUserId))
-                transaction.update(viewedUserRef, "followers", FieldValue.arrayRemove(currentUserId))
+            // Update lists based on current follow status.
+            if (isFollowing) {
+                currentFollowing.remove(viewedUserId)
+                viewedFollowers.remove(currentUserId)
             } else {
-                transaction.update(currentUserRef, "following", FieldValue.arrayUnion(viewedUserId))
-                transaction.update(viewedUserRef, "followers", FieldValue.arrayUnion(currentUserId))
+                currentFollowing.add(viewedUserId)
+                viewedFollowers.add(currentUserId)
             }
+
+            // Owner updates their own document partially, so updating just "following" is fine.
+            transaction.update(currentUserRef, "following", currentFollowing)
+            // For the viewed user, include both "followers" and "following" keys to satisfy security rules.
+            transaction.update(viewedUserRef, mapOf(
+                "followers" to viewedFollowers,
+                "following" to viewedFollowing
+            ))
         }.addOnSuccessListener {
+            // Toggle the follow status in UI.
             isFollowing = !isFollowing
             updateFollowButton()
+            updateFollowCounts() // Refresh follower/following counts.
+        }.addOnFailureListener { exception ->
+            Toast.makeText(this, "Failed to update follow status: ${exception.message}", Toast.LENGTH_SHORT).show()
         }
     }
+
 
     private fun updateFollowButton() {
         if (isFollowing) {
             followButton.text = "Unfollow"
-            followButton.setBackgroundColor(ContextCompat.getColor(this, R.color.golden_yellow))
+            followButton.setBackgroundColor(ContextCompat.getColor(this, R.color.grey))
         } else {
             followButton.text = "Follow"
-            followButton.setBackgroundColor(ContextCompat.getColor(this, R.color.grey))
+            followButton.setBackgroundColor(ContextCompat.getColor(this, R.color.golden_yellow))
         }
     }
+
+    private fun updateFollowCounts() {
+        db.collection("users").document(viewedUserId)
+            .get()
+            .addOnSuccessListener { document ->
+                if (document != null && document.exists()) {
+                    val followers = (document.get("followers") as? List<String>)?.size ?: 0
+                    val following = (document.get("following") as? List<String>)?.size ?: 0
+                    profileFollowersCount.text = "$followers"
+                    profileFollowingCount.text = "$following"
+                }
+            }
+
+    // Fetch and update FOLLOWING count (logged-in user)
+       val currentUserId = auth.currentUser?.uid ?: return
+        db.collection("users").document(currentUserId)
+            .get()
+            .addOnSuccessListener { document ->
+                if (document != null && document.exists()) {
+                    val following = (document.get("following") as? List<String>)?.size ?: 0
+                    profileFollowingCount.text = "$following"
+                }
+            }
+    }
+
 }
