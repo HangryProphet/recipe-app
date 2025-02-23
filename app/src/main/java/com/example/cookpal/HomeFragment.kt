@@ -2,21 +2,35 @@ package com.example.cookpal
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.SearchView
 import android.widget.TextView
 import androidx.fragment.app.Fragment
-import androidx.appcompat.widget.SearchView
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.google.android.gms.tasks.Task
+import com.google.android.gms.tasks.Tasks
+import com.google.android.material.chip.Chip
+import com.google.android.material.chip.ChipGroup
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 
 class HomeFragment : Fragment() {
 
-    private lateinit var searchView: SearchView
-    private lateinit var greetingText: TextView
-    private lateinit var auth: FirebaseAuth
     private lateinit var db: FirebaseFirestore
+    private lateinit var recipeRecyclerView: RecyclerView
+    private lateinit var recipeAdapter: HomeRecipeAdapter
+    private lateinit var recommendationsRecyclerView: RecyclerView
+    private lateinit var recommendationsAdapter: HomeRecipeAdapter
+    private lateinit var cuisineFilterGroup: ChipGroup
+    private lateinit var greetingText: TextView
+    private lateinit var searchView: androidx.appcompat.widget.SearchView
+    private val recipeList = mutableListOf<Recipe>()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -24,41 +38,281 @@ class HomeFragment : Fragment() {
     ): View {
         val view = inflater.inflate(R.layout.fragment_home, container, false)
 
-        auth = FirebaseAuth.getInstance()
         db = FirebaseFirestore.getInstance()
 
+        recipeRecyclerView = view.findViewById(R.id.topRatedRecyclerView)
+        cuisineFilterGroup = view.findViewById(R.id.cuisineFilterGroup)
+        greetingText = view.findViewById(R.id.greetingText)
         searchView = view.findViewById(R.id.searchView)
-        greetingText = view.findViewById(R.id.greetingText) // ✅ Add this line
+        recommendationsRecyclerView = view.findViewById(R.id.recommendationsRecyclerView)
+        recommendationsRecyclerView.layoutManager =
+            LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
 
-        loadUserData()
+        recipeRecyclerView.layoutManager =
+            LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
+        recipeAdapter = HomeRecipeAdapter(recipeList) { selectedRecipe ->
+            val intent = Intent(requireContext(), RecipeActivity::class.java)
+            intent.putExtra("RECIPE_ID", selectedRecipe.recipeId)
+            startActivity(intent)
+        }
+        recipeRecyclerView.adapter = recipeAdapter
 
-        searchView.queryHint = "Search for recipes..."
-        searchView.setIconifiedByDefault(false)
+        recommendationsAdapter = HomeRecipeAdapter(mutableListOf()) { selectedRecipe ->
+            val intent = Intent(requireContext(), RecipeActivity::class.java)
+            intent.putExtra("RECIPE_ID", selectedRecipe.recipeId)
+            startActivity(intent)
+        }
+        recommendationsRecyclerView.adapter = recommendationsAdapter
+
+        loadUserGreeting()
+        loadAllRecipes()
+        loadRandomRecipes()
+
+        searchView.setOnClickListener {
+            val intent = Intent(requireContext(), SearchActivity::class.java)
+            startActivity(intent)
+        }
 
         searchView.setOnQueryTextFocusChangeListener { _, hasFocus ->
             if (hasFocus) {
-                val intent = Intent(requireActivity(), SearchActivity::class.java)
+                val intent = Intent(requireContext(), SearchActivity::class.java)
                 startActivity(intent)
-                requireActivity().overridePendingTransition(R.anim.slide_in_up, R.anim.slide_out_stay) // Slide Up Effect
-                searchView.clearFocus() // Prevents accidental double focus issues
+                searchView.clearFocus()
+            }
+        }
+
+        cuisineFilterGroup.setOnCheckedChangeListener { _, checkedId ->
+            val selectedChip = view.findViewById<Chip>(checkedId)
+            if (selectedChip != null) {
+                val cuisine = selectedChip.text.toString()
+                if (cuisine == "All") {
+                    loadAllRecipes()
+                } else {
+                    loadTopRatedRecipesByCuisine(cuisine)
+                }
             }
         }
 
         return view
     }
 
-    private fun loadUserData() {
-        val userId = auth.currentUser?.uid ?: return
+    private fun loadUserGreeting() {
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
 
         db.collection("users").document(userId).get()
             .addOnSuccessListener { document ->
-                if (document.exists()) {
-                    val username = document.getString("username") ?: "User"
-                    greetingText.text = "HELLO, $username"
-                }
+                val username = document.getString("username") ?: "User"
+                greetingText.text = "HELLO, $username"
             }
             .addOnFailureListener {
-                greetingText.text = "HELLO, User"
+                Log.e("HomeFragment", "Failed to fetch username")
             }
     }
+
+    private fun loadAllRecipes() {
+        db.collection("recipes")
+            .orderBy("averageRating", Query.Direction.DESCENDING) // 🔥 FIX: Order by rating
+            .get()
+            .addOnSuccessListener { documents ->
+                recipeList.clear()
+
+                if (documents.isEmpty) {
+                    Log.w("HomeFragment", "No recipes found!")
+                    recipeRecyclerView.visibility = View.GONE
+                } else {
+                    recipeRecyclerView.visibility = View.VISIBLE
+
+                    val tempRecipeList = mutableListOf<Recipe>()
+                    var loadedCount = 0
+
+                    for (document in documents) {
+                        val recipeId = document.id
+                        val recipeName = document.getString("recipeName") ?: "Unknown"
+                        val cookingTime = document.getString("cookingTime") ?: "N/A"
+                        val rating = document.getDouble("averageRating") ?: 0.0
+                        val uploaderId = document.getString("userId") ?: ""
+
+                        Log.d(
+                            "HomeFragment",
+                            "Adding Recipe: $recipeName | Cooking Time: $cookingTime | Rating: $rating"
+                        )
+
+                        db.collection("users").document(uploaderId).get()
+                            .addOnSuccessListener { userDoc ->
+                                val uploaderName = userDoc.getString("username") ?: "Unknown"
+
+                                val recipe = Recipe(
+                                    recipeId = recipeId,
+                                    recipeName = recipeName,
+                                    cookingTime = cookingTime,
+                                    rating = rating,
+                                    uploaderName = uploaderName
+                                )
+
+                                tempRecipeList.add(recipe)
+                                loadedCount++
+
+                                if (loadedCount == documents.size()) {
+                                    tempRecipeList.sortByDescending { it.rating } // 🔥 FIX: Ensure sorting after all data is fetched
+                                    recipeAdapter.updateList(tempRecipeList)
+                                }
+                            }
+                            .addOnFailureListener {
+                                Log.w("HomeFragment", "Failed to fetch username for $uploaderId")
+                                loadedCount++
+
+                                if (loadedCount == documents.size()) {
+                                    tempRecipeList.sortByDescending { it.rating }
+                                    recipeAdapter.updateList(tempRecipeList)
+                                }
+                            }
+                    }
+                }
+            }
+            .addOnFailureListener { exception ->
+                Log.e("HomeFragment", "Error loading all recipes: ${exception.message}", exception)
+            }
+    }
+
+
+    private fun loadTopRatedRecipesByCuisine(cuisine: String) {
+        db.collection("recipes")
+            .whereEqualTo("cuisineType", cuisine)
+            .orderBy("averageRating", Query.Direction.DESCENDING) // 🔥 Ensure sorting by rating
+            .limit(10)
+            .get()
+            .addOnSuccessListener { documents ->
+                val tempRecipeList = mutableListOf<Recipe>()
+
+                if (documents.isEmpty) {
+                    Log.w("HomeFragment", "No top-rated recipes found for $cuisine")
+                    recipeRecyclerView.visibility = View.GONE
+                } else {
+                    recipeRecyclerView.visibility = View.VISIBLE
+
+                    var loadedCount = 0
+                    for (document in documents) {
+                        val recipeId = document.id
+                        val recipeName = document.getString("recipeName") ?: "Unknown"
+                        val cookingTime = document.getString("cookingTime") ?: "N/A"
+                        val rating = document.getDouble("averageRating") ?: 0.0
+                        val uploaderId = document.getString("userId") ?: ""
+
+                        Log.d(
+                            "HomeFragment",
+                            "Adding Recipe: $recipeName | Cooking Time: $cookingTime | Rating: $rating"
+                        )
+
+                        db.collection("users").document(uploaderId).get()
+                            .addOnSuccessListener { userDoc ->
+                                val uploaderName = userDoc.getString("username") ?: "Unknown"
+
+                                val recipe = Recipe(
+                                    recipeId = recipeId,
+                                    recipeName = recipeName,
+                                    cookingTime = cookingTime,
+                                    rating = rating,
+                                    uploaderName = uploaderName
+                                )
+
+                                tempRecipeList.add(recipe)
+                                loadedCount++
+
+                                if (loadedCount == documents.size()) {
+                                    tempRecipeList.sortByDescending { it.rating } // 🔥 FIX: Sort recipes after fetching
+                                    recipeAdapter.updateList(tempRecipeList)
+                                }
+                            }
+                            .addOnFailureListener {
+                                Log.w("HomeFragment", "Failed to fetch username for $uploaderId")
+                                loadedCount++
+
+                                if (loadedCount == documents.size()) {
+                                    tempRecipeList.sortByDescending { it.rating }
+                                    recipeAdapter.updateList(tempRecipeList)
+                                }
+                            }
+                    }
+                }
+            }
+            .addOnFailureListener { exception ->
+                Log.e(
+                    "HomeFragment",
+                    "Error loading top-rated recipes: ${exception.message}",
+                    exception
+                )
+            }
+    }
+
+    private fun loadRandomRecipes() {
+        db.collection("recipes").get()
+            .addOnSuccessListener { documents ->
+                val tempRecipeList = mutableListOf<Recipe>()
+
+                if (documents.isEmpty) {
+                    Log.w("HomeFragment", "No random recipes found")
+                    recommendationsRecyclerView.visibility = View.GONE
+                    return@addOnSuccessListener
+                } else {
+                    recommendationsRecyclerView.visibility = View.VISIBLE
+                }
+
+                for (document in documents) {
+                    val recipeId = document.id
+                    val recipeName = document.getString("recipeName") ?: "Unknown"
+                    val cookingTime = document.getString("cookingTime") ?: "N/A"
+                    val rating = document.getDouble("averageRating") ?: 0.0
+                    val uploaderId = document.getString("userId") ?: ""
+
+                    if (uploaderId.isBlank()) { // ❌ Skip recipes with no uploader
+                        Log.w("HomeFragment", "Skipping recipe $recipeId due to missing uploaderId")
+                        continue
+                    }
+
+                    val recipe = Recipe(
+                        recipeId = recipeId,
+                        recipeName = recipeName,
+                        cookingTime = cookingTime,
+                        rating = rating,
+                        uploaderId = uploaderId
+                    )
+                    tempRecipeList.add(recipe)
+                }
+
+                // Shuffle recipes to randomize
+                tempRecipeList.shuffle()
+
+                // Limit the number of displayed recipes (e.g., 10)
+                val randomRecipes = tempRecipeList.take(10)
+
+                if (randomRecipes.isEmpty()) {
+                    Log.w("HomeFragment", "No valid random recipes available after filtering.")
+                    recommendationsRecyclerView.visibility = View.GONE
+                    return@addOnSuccessListener
+                }
+
+                // Fetch uploader names
+                val uploaderTasks = mutableListOf<Task<DocumentSnapshot>>()
+                for (recipe in randomRecipes) {
+                    uploaderTasks.add(db.collection("users").document(recipe.uploaderId).get())
+                }
+
+                Tasks.whenAllSuccess<DocumentSnapshot>(uploaderTasks)
+                    .addOnSuccessListener { snapshots ->
+                        for ((index, snapshot) in snapshots.withIndex()) {
+                            randomRecipes[index].uploaderName = snapshot.getString("username") ?: "Unknown"
+                        }
+
+                        // ✅ Update adapter after uploader names are set
+                        recommendationsAdapter.updateList(randomRecipes)
+                    }
+                    .addOnFailureListener {
+                        Log.e("HomeFragment", "Failed to fetch uploader names for random recipes")
+                    }
+            }
+            .addOnFailureListener { exception ->
+                Log.e("HomeFragment", "Error loading random recipes: ${exception.message}", exception)
+            }
+    }
+
 }

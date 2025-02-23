@@ -59,13 +59,13 @@
             android:id="@+id/uploaderText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Uploaded by: User"
+            android:text="by: "
             android:textSize="14sp"
-            android:textColor="@android:color/holo_blue_dark"
-            android:visibility="gone"
+            android:textColor="@color/black"
             app:layout_constraintTop_toBottomOf="@id/cookingTimeText"
             app:layout_constraintStart_toStartOf="@id/recipeNameText"
-            android:layout_marginTop="4dp"/>
+            android:layout_marginTop="4dp"
+            android:visibility="visible"/>
 
         <!-- Rating (Star + Average) -->
         <LinearLayout

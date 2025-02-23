@@ -147,42 +147,44 @@
         app:layout_constraintTop_toBottomOf="@id/cuisineFilterGroup"
         app:layout_constraintStart_toStartOf="parent"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"/>
+        android:layout_marginTop="8dp"/>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/topRatedRecyclerView"
         android:layout_width="match_parent"
-        android:layout_height="160dp"
+        android:layout_height="210dp"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
         android:orientation="horizontal"
+        android:visibility="visible"
         app:layout_constraintTop_toBottomOf="@id/topRatedText"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="8dp"/>
+        android:layout_marginTop="2dp"/>
 
     <!-- Recommendations Section -->
     <TextView
         android:id="@+id/recommendationsText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Recommendations ⭐"
+        android:text="Random Recipes 🎲"
         android:textStyle="bold"
         android:textSize="16sp"
         android:textColor="@android:color/black"
         app:layout_constraintTop_toBottomOf="@id/topRatedRecyclerView"
         app:layout_constraintStart_toStartOf="parent"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"/>
+        android:layout_marginTop="10dp"/>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recommendationsRecyclerView"
         android:layout_width="match_parent"
-        android:layout_height="160dp"
+        android:layout_height="210dp"
+        android:visibility="visible"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
         android:orientation="horizontal"
         app:layout_constraintTop_toBottomOf="@id/recommendationsText"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="8dp"/>
+        android:layout_marginTop="2dp"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

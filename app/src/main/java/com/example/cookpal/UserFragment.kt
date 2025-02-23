@@ -12,9 +12,12 @@ import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.gms.tasks.Task
+import com.google.android.gms.tasks.Tasks
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
 
@@ -213,31 +216,51 @@ class UserFragment : Fragment() {
 
                 if (bookmarkedRecipeIds.isEmpty()) {
                     recipeList.clear()
-                    recipeAdapter.notifyDataSetChanged()
-                } else {
-                    db.collection("recipes")
-                        .whereIn(FieldPath.documentId(), bookmarkedRecipeIds)
-                        .get()
-                        .addOnSuccessListener { documents ->
-                            recipeList.clear()
-                            for (doc in documents) {
-                                val recipe = Recipe(
-                                    recipeId = doc.id,
-                                    recipeName = doc.getString("recipeName") ?: "Unknown",
-                                    cookingTime = doc.getString("cookingTime") ?: "N/A",
-                                    rating = doc.getDouble("averageRating") ?: 0.0
-                                )
-                                recipeList.add(recipe)
-                            }
-                            recipeAdapter.notifyDataSetChanged()
-                        }
-                        .addOnFailureListener {
-                            Toast.makeText(requireContext(), "Error loading bookmarks.", Toast.LENGTH_SHORT).show()
-                        }
+                    recipeAdapter.notifyDataSetChanged() // ✅ Notify adapter even when empty!
+                    return@addOnSuccessListener
                 }
+
+                db.collection("recipes")
+                    .whereIn(FieldPath.documentId(), bookmarkedRecipeIds)
+                    .get()
+                    .addOnSuccessListener { documents ->
+                        recipeList.clear()
+                        val uploaderTasks = mutableListOf<Task<DocumentSnapshot>>()
+                        val tempRecipes = mutableListOf<Recipe>() // Temporary list
+
+                        for (doc in documents) {
+                            val recipe = Recipe(
+                                recipeId = doc.id,
+                                recipeName = doc.getString("recipeName") ?: "Unknown",
+                                cookingTime = doc.getString("cookingTime") ?: "N/A",
+                                rating = doc.getDouble("averageRating") ?: 0.0,
+                                uploaderId = doc.getString("userId") ?: ""
+                            )
+                            tempRecipes.add(recipe)
+
+                            // 🔥 Fetch uploader name asynchronously
+                            val uploaderTask = db.collection("users").document(recipe.uploaderId).get()
+                            uploaderTasks.add(uploaderTask)
+                        }
+
+                        // 🔥 Ensure uploader names are set **before updating the adapter**
+                        Tasks.whenAllSuccess<DocumentSnapshot>(uploaderTasks)
+                            .addOnSuccessListener { snapshots ->
+                                for ((index, snapshot) in snapshots.withIndex()) {
+                                    tempRecipes[index].uploaderName = snapshot.getString("username") ?: "Unknown"
+                                }
+
+                                // 🔄 Now update the list after uploader names are fully fetched
+                                recipeList.clear()
+                                recipeList.addAll(tempRecipes)
+                                recipeAdapter.notifyDataSetChanged()
+                            }
+                    }
+                    .addOnFailureListener {
+                        Toast.makeText(requireContext(), "Error loading bookmarks.", Toast.LENGTH_SHORT).show()
+                    }
             }
     }
-
 
     private fun showSettingsMenu(anchor: ImageView) {
         val popup = PopupMenu(requireContext(), anchor)

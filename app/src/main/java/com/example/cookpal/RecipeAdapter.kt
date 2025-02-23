@@ -10,8 +10,8 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 
 class RecipeAdapter(
-    private val recipeList: List<Recipe>,
-    private val showUploader: Boolean, // Determines whether to show uploader name
+    private var recipeList: MutableList<Recipe>,
+    private val showUploader: Boolean, // Determines if uploader name is shown (Bookmarks only)
     private val onRecipeClick: (Recipe) -> Unit
 ) : RecyclerView.Adapter<RecipeAdapter.RecipeViewHolder>() {
 
@@ -34,15 +34,15 @@ class RecipeAdapter(
 
         holder.recipeName.text = recipe.recipeName
         holder.cookingTime.text = recipe.cookingTime
-        holder.rating.text = recipe.rating.toString()
+        holder.rating.text = "${recipe.rating}"
 
-        // Ensure uploader name is displayed properly
+        // ✅ Show uploader name only if `showUploader` is true
         if (showUploader) {
-            holder.uploaderText.text = "Uploaded by: ${recipe.uploaderName}"
+            holder.uploaderText.text = "By: ${recipe.uploaderName}"
             holder.uploaderText.setTextColor(Color.BLACK)
             holder.uploaderText.visibility = View.VISIBLE
 
-            // Redirect to user's profile
+            // 🔥 Redirect to uploader's profile
             holder.uploaderText.setOnClickListener {
                 val context = holder.itemView.context
                 val intent = Intent(context, UserProfileActivity::class.java)
@@ -50,11 +50,21 @@ class RecipeAdapter(
                 context.startActivity(intent)
             }
         } else {
-            holder.uploaderText.visibility = View.GONE
+            holder.uploaderText.visibility = View.GONE // ✅ Hide uploader name for personal recipes
         }
 
+        // ✅ Handle recipe item click (Open RecipeActivity)
         holder.itemView.setOnClickListener { onRecipeClick(recipe) }
     }
 
     override fun getItemCount() = recipeList.size
+
+    /**
+     * 🔥 Function to update the list dynamically (for search filtering, bookmarks, etc.)
+     */
+    fun updateList(newList: List<Recipe>) {
+        recipeList.clear()
+        recipeList.addAll(newList)
+        notifyDataSetChanged()
+    }
 }
