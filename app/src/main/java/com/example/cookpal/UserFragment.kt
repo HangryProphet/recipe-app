@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.*
 import android.widget.EditText
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.PopupMenu
 import android.widget.TextView
 import android.widget.Toast
@@ -36,6 +37,10 @@ class UserFragment : Fragment() {
     private lateinit var profileRecipeCount: TextView
     private lateinit var profileFollowersCount: TextView
     private lateinit var profileFollowingCount: TextView
+    private lateinit var profileFollowersLabel: TextView
+    private lateinit var profileFollowingLabel: TextView
+    private lateinit var FollowerButtonClick: LinearLayout
+    private lateinit var FollowingButtonClick: LinearLayout
 
 
     private var recipeList = mutableListOf<Recipe>()
@@ -62,16 +67,20 @@ class UserFragment : Fragment() {
         profileRecipeCount = view.findViewById(R.id.tvRecipeCount)
         profileFollowersCount = view.findViewById(R.id.tvFollowersCount)
         profileFollowingCount = view.findViewById(R.id.tvFollowingCount)
+        profileFollowersLabel = view.findViewById(R.id.tvFollowersLabel)
+        profileFollowingLabel = view.findViewById(R.id.tvFollowingLabel)
+        FollowerButtonClick = view.findViewById(R.id.FollowerButtonClick)
+        FollowingButtonClick = view.findViewById(R.id.FollowingButtonClick)
 
         // Redirect to FollowersActivity when clicking "Followers"
-        profileFollowersCount.setOnClickListener {
+        FollowerButtonClick.setOnClickListener {
             val intent = Intent(requireContext(), FollowersActivity::class.java)
             intent.putExtra("USER_ID", auth.currentUser?.uid) // Pass the user ID
             startActivity(intent)
         }
 
 // Redirect to FollowingActivity when clicking "Following"
-        profileFollowingCount.setOnClickListener {
+        FollowingButtonClick.setOnClickListener {
             val intent = Intent(requireContext(), FollowingActivity::class.java)
             intent.putExtra("USER_ID", auth.currentUser?.uid) // Pass the user ID
             startActivity(intent)
@@ -91,7 +100,7 @@ class UserFragment : Fragment() {
         loadUserData()
         loadUserRecipes()
 
-        profileFollowersCount.setOnClickListener {
+        profileFollowersLabel.setOnClickListener {
             val intent = Intent(requireContext(), FollowersActivity::class.java)
             intent.putExtra("USER_ID", auth.currentUser!!.uid)
             startActivity(intent)

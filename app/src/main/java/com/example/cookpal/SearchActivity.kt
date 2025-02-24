@@ -65,30 +65,40 @@ class SearchActivity : AppCompatActivity() {
         val lowercaseQuery = query.lowercase()
 
         db.collection("recipes")
-            .whereGreaterThanOrEqualTo("recipeName", lowercaseQuery)
-            .whereLessThanOrEqualTo("recipeName", lowercaseQuery + "\uf8ff") // Case-insensitive
-            .get()
+            .get() // ✅ Get all recipes
             .addOnSuccessListener { documents ->
                 recipeList.clear()
+
                 if (documents.isEmpty) {
-                    Log.d("SearchDebug", "No recipes found for $query")
+                    Log.d("SearchDebug", "No recipes found!")
+                    recipeAdapter.notifyDataSetChanged()
+                    return@addOnSuccessListener
                 }
 
-                val recipesToFetchUploader = mutableListOf<Recipe>()
+                val tempRecipes = mutableListOf<Recipe>()
 
                 for (document in documents) {
-                    val recipe = Recipe(
-                        recipeId = document.id,
-                        recipeName = document.getString("recipeName") ?: "Unknown",
-                        cookingTime = document.getString("cookingTime") ?: "N/A",
-                        rating = document.getDouble("averageRating") ?: 0.0,
-                        uploaderId = document.getString("userId") ?: ""
-                    )
-                    recipesToFetchUploader.add(recipe)
+                    val recipeName = document.getString("recipeName") ?: "Unknown"
+                    val cookingTime = document.getString("cookingTime") ?: "N/A"
+                    val rating = document.getDouble("averageRating") ?: 0.0
+                    val uploaderId = document.getString("userId") ?: ""
+
+                    // 🔥 Filter the recipes based on search input
+                    if (recipeName.lowercase().contains(lowercaseQuery)) {
+                        val recipe = Recipe(
+                            recipeId = document.id,
+                            recipeName = recipeName,
+                            cookingTime = cookingTime,
+                            rating = rating,
+                            uploaderId = uploaderId
+                        )
+                        tempRecipes.add(recipe)
+                    }
                 }
 
-                if (recipesToFetchUploader.isNotEmpty()) {
-                    fetchUploaderNames(recipesToFetchUploader)
+                // ✅ Fetch uploader names **AFTER** filtering
+                if (tempRecipes.isNotEmpty()) {
+                    fetchUploaderNames(tempRecipes)
                 } else {
                     recipeAdapter.notifyDataSetChanged()
                 }

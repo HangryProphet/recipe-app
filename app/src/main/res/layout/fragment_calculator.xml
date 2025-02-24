@@ -9,15 +9,27 @@
     tools:context=".CalculatorFragment">
 
     <TextView
-        android:id="@+id/calculatorText"
+        android:id="@+id/comingSoonText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Calculator Screen"
-        android:textSize="20sp"
+        android:text="Coming Soon..."
+        android:textSize="48sp"
         android:textStyle="bold"
+        android:textColor="@android:color/black"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="40dp"/>
+
+    <ImageView
+        android:id="@+id/appImage"
+        android:layout_width="400dp"
+        android:layout_height="450dp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/collab_pic"
+    app:layout_constraintTop_toBottomOf="@id/comingSoonText"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintEnd_toEndOf="parent"
+    android:layout_marginTop="20dp"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

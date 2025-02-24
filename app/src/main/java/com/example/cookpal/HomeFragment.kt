@@ -66,7 +66,7 @@ class HomeFragment : Fragment() {
 
         loadUserGreeting()
         loadAllRecipes()
-        loadRandomRecipes()
+        loadRandomRecipes(null)
 
         searchView.setOnClickListener {
             val intent = Intent(requireContext(), SearchActivity::class.java)
@@ -87,8 +87,10 @@ class HomeFragment : Fragment() {
                 val cuisine = selectedChip.text.toString()
                 if (cuisine == "All") {
                     loadAllRecipes()
+                    loadRandomRecipes(null) // ✅ Show any recipes when "All" is selected
                 } else {
                     loadTopRatedRecipesByCuisine(cuisine)
+                    loadRandomRecipes(cuisine) // ✅ Show only recipes from the selected cuisine
                 }
             }
         }
@@ -111,7 +113,7 @@ class HomeFragment : Fragment() {
 
     private fun loadAllRecipes() {
         db.collection("recipes")
-            .orderBy("averageRating", Query.Direction.DESCENDING) // 🔥 FIX: Order by rating
+            .orderBy("averageRating", Query.Direction.DESCENDING)
             .get()
             .addOnSuccessListener { documents ->
                 recipeList.clear()
@@ -153,8 +155,13 @@ class HomeFragment : Fragment() {
                                 loadedCount++
 
                                 if (loadedCount == documents.size()) {
-                                    tempRecipeList.sortByDescending { it.rating } // 🔥 FIX: Ensure sorting after all data is fetched
+                                    tempRecipeList.sortByDescending { it.rating }
                                     recipeAdapter.updateList(tempRecipeList)
+
+                                    // ✅ Call `loadRandomRecipes(null)` **only if it hasn't been loaded yet**
+                                    if (recommendationsAdapter.itemCount == 0) {
+                                        loadRandomRecipes(null)
+                                    }
                                 }
                             }
                             .addOnFailureListener {
@@ -164,6 +171,10 @@ class HomeFragment : Fragment() {
                                 if (loadedCount == documents.size()) {
                                     tempRecipeList.sortByDescending { it.rating }
                                     recipeAdapter.updateList(tempRecipeList)
+
+                                    if (recommendationsAdapter.itemCount == 0) {
+                                        loadRandomRecipes(null)
+                                    }
                                 }
                             }
                     }
@@ -173,7 +184,6 @@ class HomeFragment : Fragment() {
                 Log.e("HomeFragment", "Error loading all recipes: ${exception.message}", exception)
             }
     }
-
 
     private fun loadTopRatedRecipesByCuisine(cuisine: String) {
         db.collection("recipes")
@@ -244,18 +254,27 @@ class HomeFragment : Fragment() {
             }
     }
 
-    private fun loadRandomRecipes() {
-        db.collection("recipes").get()
+    private fun loadRandomRecipes(selectedCuisine: String? = null) {
+        var query: Query = db.collection("recipes")
+
+        if (!selectedCuisine.isNullOrEmpty() && selectedCuisine != "All") {
+            query = query.whereEqualTo("cuisineType", selectedCuisine)
+        }
+
+        query.get()
             .addOnSuccessListener { documents ->
                 val tempRecipeList = mutableListOf<Recipe>()
 
                 if (documents.isEmpty) {
-                    Log.w("HomeFragment", "No random recipes found")
+                    Log.w("HomeFragment", "No random recipes found for $selectedCuisine")
                     recommendationsRecyclerView.visibility = View.GONE
+                    recommendationsAdapter.updateList(emptyList()) // ✅ Clear list if no results
                     return@addOnSuccessListener
                 } else {
                     recommendationsRecyclerView.visibility = View.VISIBLE
                 }
+
+                val uploaderTasks = mutableListOf<Task<DocumentSnapshot>>()
 
                 for (document in documents) {
                     val recipeId = document.id
@@ -264,7 +283,7 @@ class HomeFragment : Fragment() {
                     val rating = document.getDouble("averageRating") ?: 0.0
                     val uploaderId = document.getString("userId") ?: ""
 
-                    if (uploaderId.isBlank()) { // ❌ Skip recipes with no uploader
+                    if (uploaderId.isBlank()) {
                         Log.w("HomeFragment", "Skipping recipe $recipeId due to missing uploaderId")
                         continue
                     }
@@ -276,35 +295,23 @@ class HomeFragment : Fragment() {
                         rating = rating,
                         uploaderId = uploaderId
                     )
+
                     tempRecipeList.add(recipe)
+
+                    val uploaderTask = db.collection("users").document(uploaderId).get()
+                    uploaderTasks.add(uploaderTask)
                 }
 
-                // Shuffle recipes to randomize
-                tempRecipeList.shuffle()
-
-                // Limit the number of displayed recipes (e.g., 10)
-                val randomRecipes = tempRecipeList.take(10)
-
-                if (randomRecipes.isEmpty()) {
-                    Log.w("HomeFragment", "No valid random recipes available after filtering.")
-                    recommendationsRecyclerView.visibility = View.GONE
-                    return@addOnSuccessListener
-                }
-
-                // Fetch uploader names
-                val uploaderTasks = mutableListOf<Task<DocumentSnapshot>>()
-                for (recipe in randomRecipes) {
-                    uploaderTasks.add(db.collection("users").document(recipe.uploaderId).get())
-                }
-
+                // ✅ Ensure all uploader names are fetched before updating the adapter
                 Tasks.whenAllSuccess<DocumentSnapshot>(uploaderTasks)
                     .addOnSuccessListener { snapshots ->
                         for ((index, snapshot) in snapshots.withIndex()) {
-                            randomRecipes[index].uploaderName = snapshot.getString("username") ?: "Unknown"
+                            tempRecipeList[index].uploaderName =
+                                snapshot.getString("username") ?: "Unknown"
                         }
 
-                        // ✅ Update adapter after uploader names are set
-                        recommendationsAdapter.updateList(randomRecipes)
+                        tempRecipeList.shuffle() // ✅ Randomize the list before displaying
+                        recommendationsAdapter.updateList(tempRecipeList) // ✅ Update UI properly
                     }
                     .addOnFailureListener {
                         Log.e("HomeFragment", "Failed to fetch uploader names for random recipes")

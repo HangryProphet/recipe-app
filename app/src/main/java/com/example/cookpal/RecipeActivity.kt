@@ -31,6 +31,7 @@ class RecipeActivity : AppCompatActivity() {
     private lateinit var menuButton: ImageButton
     private lateinit var ratingOverlay: TextView
     private lateinit var reviewCountText: TextView
+    private lateinit var backButton: ImageButton
 
     // RecyclerViews for content
     private lateinit var ingredientsRecyclerView: RecyclerView
@@ -69,6 +70,7 @@ class RecipeActivity : AppCompatActivity() {
         recipeChipGroup = findViewById(R.id.recipeChipGroup)
         ratingOverlay = findViewById(R.id.ratingsOverlay)
         reviewCountText = findViewById(R.id.reviewCountText)
+        backButton = findViewById(R.id.backButton)
 
         currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
         recipeId = intent.getStringExtra("RECIPE_ID") ?: ""
@@ -108,7 +110,6 @@ class RecipeActivity : AppCompatActivity() {
                     val steps = document.get("steps") as? List<String> ?: emptyList()
                     val reviews = document.get("reviews") as? List<String> ?: emptyList()
 
-                    // Set UI texts
                     recipeNameText.text = recipeName
                     cuisineTypeText.text = "Cuisine: $cuisineType"
                     shortDescriptionText.text = shortDesc
@@ -250,7 +251,19 @@ class RecipeActivity : AppCompatActivity() {
         followButton.setOnClickListener {
             toggleFollowForUploader()
         }
+
+        backButton.setOnClickListener {
+            onBackPressed() // Calls the overridden onBackPressed method
+        }
     }
+    override fun onBackPressed() {
+        if (supportFragmentManager.backStackEntryCount > 0) {
+            supportFragmentManager.popBackStack() // If in a fragment, go back
+        } else {
+            super.onBackPressed() // Otherwise, go back to the previous activity
+        }
+    }
+
     private fun loadUserReviewAndOpenEdit() {
         val userReviewRef = db.collection("recipes").document(recipeId)
             .collection("reviews").whereEqualTo("userId", currentUserId)
